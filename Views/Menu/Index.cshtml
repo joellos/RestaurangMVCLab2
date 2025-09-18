@@ -1,0 +1,155 @@
+﻿@using RestaurangMVCLab2.DTOs
+@model List<MenuItemResponseDto>
+@{
+    ViewData["Title"] = "Vår Meny";
+    var token = Context.Session.GetString("JwtToken");
+    var isAdmin = !string.IsNullOrEmpty(token);
+}
+
+<div class="container mt-4">
+    <h1 class="mb-4">Vår Meny</h1>
+
+    @* Success/Error meddelanden *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @* Admin: Lägg till ny rätt *@
+    @if (isAdmin)
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <i class="fas fa-user-shield"></i> Administratörsläge aktivt
+                    <a asp-action="Create" class="btn btn-success ms-3">
+                        <i class="fas fa-plus"></i> Lägg till ny rätt
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* Sök- och filterformulär *@
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form asp-action="Index" method="get" class="d-flex">
+                <input type="text" name="search" value="@ViewBag.CurrentSearch"
+                       class="form-control me-2" placeholder="Sök efter rätter...">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            @if (ViewBag.Categories != null)
+            {
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle w-100"
+                            type="button" data-bs-toggle="dropdown">
+                        @(ViewBag.CurrentCategory ?? "Alla kategorier")
+                    </button>
+                    <ul class="dropdown-menu w-100">
+                        <li><a class="dropdown-item" href="@Url.Action("Index")">Alla kategorier</a></li>
+                        @foreach (var category in ViewBag.Categories)
+                        {
+                            <li>
+                                <a class="dropdown-item"
+                                   href="@Url.Action("Index", new { category = category })">@category</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Felmeddelande *@
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @* Tom meny *@
+    @if (!Model.Any() && ViewBag.ErrorMessage == null)
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Inga menyrätter tillgängliga för tillfället.
+        </div>
+    }
+
+    @* Menyrätter *@
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        @* Bild (om den finns) *@
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-utensils fa-3x text-muted"></i>
+                            </div>
+                        }
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">@item.Name</h5>
+                                @if (item.IsPopular)
+                                {
+                                    <span class="badge bg-danger">Populär</span>
+                                }
+                            </div>
+                            <p class="card-text flex-grow-1">@item.Description</p>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="h5 text-primary mb-0">@item.Price.ToString("C")</span>
+                                    <span class="badge bg-secondary">@item.Category</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Admin: Redigera/Ta bort knappar *@
+                        @if (isAdmin)
+                        {
+                            <div class="card-footer">
+                                <div class="btn-group w-100" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Redigera
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Är du säker på att du vill ta bort denna rätt?')">
+                                            <i class="fas fa-trash"></i> Ta bort
+                                        </button>
+                                    </form>
+                                    <form asp-action="TogglePopular" asp-route-id="@item.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-info btn-sm">
+                                            <i class="fas fa-star"></i> @(item.IsPopular ? "Ta bort populär" : "Gör populär")
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

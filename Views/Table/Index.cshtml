@@ -1,0 +1,235 @@
+﻿@using RestaurangMVCLab2.DTOs
+@model List<TableResponseDto>
+@{
+    ViewData["Title"] = "Bordhantering - Admin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-chair text-primary me-2"></i>
+                        Bordhantering
+                    </h2>
+                    <p class="text-muted mt-1">Hantera restaurangens bord och placeringar</p>
+                </div>
+                <a href="@Url.Action("Create", "Table")"
+                   class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    Lägg till nytt bord
+                </a>
+            </div>
+
+            <!-- Success/Error Messages -->
+            @if (!string.IsNullOrEmpty(ViewBag.SuccessMessage as string))
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @ViewBag.SuccessMessage
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chair fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="card-title mb-0">@Model.Count</h5>
+                                    <p class="card-text small mb-0">Totalt bord</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-check-circle fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="card-title mb-0">@Model.Count(t => t.IsActive)</h5>
+                                    <p class="card-text small mb-0">Aktiva bord</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-pause-circle fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="card-title mb-0">@Model.Count(t => !t.IsActive)</h5>
+                                    <p class="card-text small mb-0">Inaktiva bord</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-users fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="card-title mb-0">@Model.Sum(t => t.Capacity)</h5>
+                                    <p class="card-text small mb-0">Total kapacitet</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tables List -->
+            @if (Model.Any())
+            {
+                <div class="card shadow">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Alla bord (@Model.Count st)
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="fas fa-hashtag me-1"></i>Bordsnummer</th>
+                                        <th><i class="fas fa-users me-1"></i>Kapacitet</th>
+                                        <th><i class="fas fa-toggle-on me-1"></i>Status</th>
+                                        <th><i class="fas fa-calendar me-1"></i>Aktuella bokningar</th>
+                                        <th class="text-end"><i class="fas fa-cogs me-1"></i>Åtgärder</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var table in Model.OrderBy(t => t.TableNumber))
+                                    {
+                                        <tr class="@(table.IsActive ? "" : "table-secondary")">
+                                            <td>
+                                                <strong class="text-primary">Bord @table.TableNumber</strong>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">
+                                                    @table.Capacity
+                                                    @(table.Capacity == 1 ? "plats" : "platser")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (table.IsActive)
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check me-1"></i>Aktivt
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">
+                                                        <i class="fas fa-pause me-1"></i>Inaktivt
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (table.CurrentBookingsCount > 0)
+                                                {
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-calendar-check me-1"></i>
+                                                        @table.CurrentBookingsCount bokningar
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-calendar me-1"></i>Inga bokningar
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="btn-group" role="group">
+                                                    <!-- Redigera -->
+                                                    <a href="@Url.Action("Edit", "Table", new { id = table.Id })"
+                                                       class="btn btn-outline-primary btn-sm"
+                                                       title="Redigera bord">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+
+                                                    <!-- Toggle Active/Inactive -->
+                                                    <form asp-action="ToggleActive" asp-route-id="@table.Id"
+                                                          method="post" class="d-inline"
+                                                          onsubmit="return confirm('@(table.IsActive ? "Inaktivera" : "Aktivera") bord @table.TableNumber?')">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit"
+                                                                class="btn btn-outline-@(table.IsActive ? "warning" : "success") btn-sm"
+                                                                title="@(table.IsActive ? "Inaktivera" : "Aktivera") bord">
+                                                            <i class="fas fa-@(table.IsActive ? "pause" : "play")"></i>
+                                                        </button>
+                                                    </form>
+
+                                                    <!-- Ta bort -->
+                                                    <form asp-action="Delete" asp-route-id="@table.Id"
+                                                          method="post" class="d-inline"
+                                                          onsubmit="return confirm('Är du säker på att du vill ta bort bord @table.TableNumber? Detta går inte att ångra.')">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit"
+                                                                class="btn btn-outline-danger btn-sm"
+                                                                title="Ta bort bord"
+                                                        @(table.CurrentBookingsCount > 0 ? "disabled" : "")>
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Inget bord finns -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-chair fa-5x text-muted"></i>
+                    </div>
+                    <h4 class="text-muted">Inga bord finns ännu</h4>
+                    <p class="text-muted">Skapa ditt första bord för att komma igång med bordhanteringen.</p>
+                    <a href="@Url.Action("Create", "Table")"
+                       class="btn btn-primary btn-lg mt-3">
+                        <i class="fas fa-plus me-2"></i>
+                        Skapa första bordet
+                    </a>
+                </div>
+            }
+
+            <!-- Back to Admin -->
+            <div class="mt-4">
+                <a href="@Url.Action("Index", "Admin")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Tillbaka till Admin
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

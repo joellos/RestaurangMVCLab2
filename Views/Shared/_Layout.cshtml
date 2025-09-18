@@ -1,0 +1,223 @@
+﻿<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RestaurangMVCLab2</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/RestaurangMVCLab2.styles.css" asp-append-version="true" />
+
+    <!-- Font Awesome för ikoner -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <!-- Brand/Logo -->
+                <a class="navbar-brand fw-bold" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="fas fa-utensils text-primary me-2"></i>
+                    RestaurangMVCLab2
+                </a>
+
+                <!-- Mobile toggle -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <!-- Vänster navigation -->
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home me-1"></i>
+                                Hem
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Menu" asp-action="Index">
+                                <i class="fas fa-book-open me-1"></i>
+                                Meny
+                            </a>
+                        </li>
+                        <!-- TODO: Lägg till bokningslänk här senare -->
+                        @* <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Booking" asp-action="Index">
+                                <i class="fas fa-calendar-plus me-1"></i>
+                                Boka bord
+                            </a>
+                        </li> *@
+                    </ul>
+
+                    <!-- Höger navigation -->
+                    <ul class="navbar-nav">
+                        @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")))
+                        {
+                            <!-- INLOGGAD - Admin dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-success fw-bold" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-cog me-1"></i>
+                                    Admin
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <!-- Dashboard -->
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Admin" asp-action="Index">
+                                            <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                                            Dashboard
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+
+                                    <!-- Menyhantering -->
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Menu" asp-action="Index">
+                                            <i class="fas fa-utensils text-success me-2"></i>
+                                            Hantera meny
+                                        </a>
+                                    </li>
+
+                                    <!-- Bordhantering -->
+                                    <li>
+                                        <a class="dropdown-item" asp-area="Admin" asp-controller="Table" asp-action="Index">
+                                            <i class="fas fa-chair text-info me-2"></i>
+                                            Hantera bord
+                                        </a>
+                                    </li>
+
+                                    <!-- TODO: Bokningshantering kommer här -->
+                                    @* <li>
+                                        <a class="dropdown-item" asp-area="Admin" asp-controller="Booking" asp-action="Index">
+                                            <i class="fas fa-calendar-check text-warning me-2"></i>
+                                            Hantera bokningar
+                                        </a>
+                                    </li> *@
+
+                                    <li><hr class="dropdown-divider"></li>
+
+                                    <!-- Logga ut -->
+                                    <li>
+                                        <a class="dropdown-item text-danger" asp-area="" asp-controller="Auth" asp-action="Logout"
+                                           onclick="return confirm('Är du säker på att du vill logga ut?')">
+                                            <i class="fas fa-sign-out-alt me-2"></i>
+                                            Logga ut
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- INTE INLOGGAD - Visa login-länk -->
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Auth" asp-action="Login">
+                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                    Logga in
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <main role="main" class="pb-3">
+            <!-- Global Success/Error Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    @TempData["InfoMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-top footer text-muted mt-5">
+        <div class="container">
+            <div class="row py-4">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        <i class="fas fa-utensils text-primary me-2"></i>
+                        &copy; 2025 - RestaurangMVCLab2
+                    </p>
+                    <small class="text-muted">Välkommen till vår restaurang!</small>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-decoration-none">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Privacy
+                    </a>
+                    @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")))
+                    {
+                        <span class="mx-2">|</span>
+                        <a asp-area="" asp-controller="Admin" asp-action="Index" class="text-decoration-none text-success">
+                            <i class="fas fa-cogs me-1"></i>
+                            Admin
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Auto-dismiss alerts after 5 seconds -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss success messages after 5 seconds
+            const successAlerts = document.querySelectorAll('.alert-success');
+            successAlerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+
+            // Auto-dismiss info messages after 7 seconds
+            const infoAlerts = document.querySelectorAll('.alert-info');
+            infoAlerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 7000);
+            });
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

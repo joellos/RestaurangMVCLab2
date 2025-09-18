@@ -1,0 +1,52 @@
+﻿@using RestaurangMVCLab2.DTOs
+@model List<MenuItemResponseDto>
+@{
+    ViewData["Title"] = "Lite av Allt - Familjerestaurang";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Välkommen till Lite av Allt</h1>
+    <p class="lead">Familjerestaurang med klassisk husmanskost och italienska favoriter. Här hittar alla i familjen något att njuta av!</p>
+</div>
+ @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        @* Bild (om den finns) *@
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-utensils fa-3x text-muted"></i>
+                            </div>
+                        }
+
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">@item.Name</h5>
+                                @if (item.IsPopular)
+                                {
+                                    <span class="badge bg-danger">Populär</span>
+                                }
+                            </div>
+
+                            <p class="card-text flex-grow-1">@item.Description</p>
+
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="h5 text-primary mb-0">@item.Price.ToString("C")</span>
+                                    <span class="badge bg-secondary">@item.Category</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
