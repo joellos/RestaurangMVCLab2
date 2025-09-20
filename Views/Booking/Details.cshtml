@@ -1,0 +1,224 @@
+﻿@using RestaurangMVCLab2.DTOs
+@model BookingResponseDto
+@{
+    ViewData["Title"] = "Bokningsdetaljer - Admin";
+    var isPast = Model.BookingDateTime < DateTime.Now;
+    var isToday = Model.BookingDateTime.Date == DateTime.Today;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="mb-2">
+                    <i class="fas fa-calendar-check text-primary me-2"></i>
+                    Bokningsdetaljer
+                </h2>
+                <p class="text-muted">Bokning #@Model.Id</p>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="text-center mb-4">
+                @if (isPast)
+                {
+                    <span class="badge bg-secondary fs-6 px-3 py-2">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Avslutad bokning
+                    </span>
+                }
+                else if (isToday)
+                {
+                    <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                        <i class="fas fa-clock me-1"></i>
+                        Bokning idag
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-success fs-6 px-3 py-2">
+                        <i class="fas fa-calendar-plus me-1"></i>
+                        Kommande bokning
+                    </span>
+                }
+            </div>
+
+            <!-- Main Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Bokningsinformation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Datum
+                                </label>
+                                <p class="fs-5 fw-bold text-primary mb-0">
+                                    @Model.BookingDateTime.ToString("dddd, d MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Tid
+                                </label>
+                                <p class="fs-5 fw-bold text-primary mb-0">
+                                    @Model.BookingDateTime.ToString("HH:mm") - @Model.EndTime.ToString("HH:mm")
+                                    <small class="text-muted">(2 timmar)</small>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">
+                                    <i class="fas fa-users me-1"></i>
+                                    Antal gäster
+                                </label>
+                                <p class="fs-5 fw-bold mb-0">
+                                    <span class="badge bg-success fs-6">
+                                        @Model.NumberOfGuests @(Model.NumberOfGuests == 1 ? "gäst" : "gäster")
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">
+                                    <i class="fas fa-plus-circle me-1"></i>
+                                    Skapad
+                                </label>
+                                <p class="fs-6 mb-0">
+                                    @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Kundinformation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">
+                                    <i class="fas fa-user me-1"></i>
+                                    Namn
+                                </label>
+                                <p class="fs-5 fw-bold mb-0">@Model.Customer.Name</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label text-muted">
+                                    <i class="fas fa-phone me-1"></i>
+                                    Telefon
+                                </label>
+                                <p class="fs-5 mb-0">
+                                    <a href="tel:@Model.Customer.PhoneNumber" class="text-decoration-none">
+                                        @Model.Customer.PhoneNumber
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chair me-2"></i>
+                        Bordsinformation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <i class="fas fa-chair fa-3x text-warning mb-2"></i>
+                                <h4 class="fw-bold text-primary">Bord @Model.Table.TableNumber</h4>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <i class="fas fa-users fa-3x text-info mb-2"></i>
+                                <h4 class="fw-bold">@Model.Table.Capacity platser</h4>
+                                <p class="text-muted mb-0">Max kapacitet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Special Requests Card -->
+            @if (!string.IsNullOrEmpty(Model.SpecialRequests))
+            {
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-comment me-2"></i>
+                            Specialönskemål
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="fs-6 mb-0">@Model.SpecialRequests</p>
+                    </div>
+                </div>
+            }
+
+            <!-- Action Buttons -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Åtgärder
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap justify-content-center">
+                        <!-- Edit -->
+                        <a href="@Url.Action("Edit", new { id = Model.Id })"
+                           class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>
+                            Redigera bokning
+                        </a>
+
+                        <!-- Delete -->
+                        <form asp-action="Delete" asp-route-id="@Model.Id"
+                              method="post" class="d-inline"
+                              onsubmit="return confirm('Är du säker på att du vill ta bort denna bokning för @Model.Customer.Name?\n\nDatum: @Model.BookingDateTime.ToString("yyyy-MM-dd HH:mm")\nBord: @Model.Table.TableNumber\n\nDetta går inte att ångra.')">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>
+                                Ta bort bokning
+                            </button>
+                        </form>
+
+                        <!-- Back -->
+                        <a href="@Url.Action("Index")" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Tillbaka till lista
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

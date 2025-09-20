@@ -1,5 +1,4 @@
-﻿@* Views/Shared/_Layout.cshtml - Förbättrad Navigation *@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="sv">
 <head>
     <meta charset="utf-8" />
@@ -102,6 +101,21 @@
 
                                     <li><hr class="dropdown-divider"></li>
 
+                                    <!-- Bokningshantering -->
+                                    <li class="px-3 py-2 bg-light border-bottom">
+                                        <small class="text-muted fw-bold text-uppercase">
+                                            <i class="fas fa-calendar-check me-1"></i>Bokningar
+                                        </small>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item py-2" asp-controller="Booking" asp-action="Index">
+                                            <i class="fas fa-list text-warning me-3"></i>
+                                            <span>Visa alla bokningar</span>
+                                        </a>
+                                    </li>
+
+                                    <li><hr class="dropdown-divider"></li>
+
                                     <!-- Bordhantering -->
                                     <li class="px-3 py-2 bg-light border-bottom">
                                         <small class="text-muted fw-bold text-uppercase">
@@ -119,27 +133,6 @@
                                             <i class="fas fa-plus text-info me-3"></i>
                                             <span>Lägg till nytt bord</span>
                                         </a>
-                                    </li>
-
-                                    <li><hr class="dropdown-divider"></li>
-
-                                    <!-- Kommande funktioner -->
-                                    <li class="px-3 py-2 bg-light border-bottom">
-                                        <small class="text-muted fw-bold text-uppercase">
-                                            <i class="fas fa-clock me-1"></i>Kommer snart
-                                        </small>
-                                    </li>
-                                    <li>
-                                        <span class="dropdown-item py-2 text-muted">
-                                            <i class="fas fa-calendar-check text-warning me-3"></i>
-                                            <span>Bokningshantering</span>
-                                        </span>
-                                    </li>
-                                    <li>
-                                        <span class="dropdown-item py-2 text-muted">
-                                            <i class="fas fa-users text-secondary me-3"></i>
-                                            <span>Kundhantering</span>
-                                        </span>
                                     </li>
 
                                     <li><hr class="dropdown-divider"></li>

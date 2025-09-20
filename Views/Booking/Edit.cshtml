@@ -1,0 +1,217 @@
+﻿@using RestaurangMVCLab2.DTOs
+@model UpdateBookingDto
+@{
+    ViewData["Title"] = "Redigera bokning - Admin";
+    var bookingId = ViewBag.BookingId as int?;
+    var booking = ViewBag.Booking as BookingResponseDto;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h2 class="mb-2">
+                    <i class="fas fa-edit text-primary me-2"></i>
+                    Redigera bokning
+                </h2>
+                @if (booking != null)
+                {
+                    <p class="text-muted">
+                        Bokning #@booking.Id för @booking.Customer.Name
+                    </p>
+                }
+            </div>
+
+            <!-- Current Booking Info -->
+            @if (booking != null)
+            {
+                <div class="card mb-4 bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            Nuvarande bokningsinformation
+                        </h6>
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <i class="fas fa-user fa-2x text-primary mb-2"></i>
+                                <h6 class="text-muted">Kund</h6>
+                                <p class="mb-0"><strong>@booking.Customer.Name</strong></p>
+                                <small class="text-muted">@booking.Customer.PhoneNumber</small>
+                            </div>
+                            <div class="col-md-3">
+                                <i class="fas fa-calendar fa-2x text-success mb-2"></i>
+                                <h6 class="text-muted">Ursprungligt datum</h6>
+                                <p class="mb-0"><strong>@booking.BookingDateTime.ToString("yyyy-MM-dd")</strong></p>
+                                <small class="text-muted">@booking.BookingDateTime.ToString("HH:mm") - @booking.EndTime.ToString("HH:mm")</small>
+                            </div>
+                            <div class="col-md-3">
+                                <i class="fas fa-chair fa-2x text-warning mb-2"></i>
+                                <h6 class="text-muted">Bord</h6>
+                                <p class="mb-0"><strong>Bord @booking.Table.TableNumber</strong></p>
+                                <small class="text-muted">(@booking.Table.Capacity platser)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <i class="fas fa-users fa-2x text-info mb-2"></i>
+                                <h6 class="text-muted">Ursprungligt antal</h6>
+                                <p class="mb-0"><strong>@booking.NumberOfGuests gäster</strong></p>
+                                <small class="text-muted">Max @booking.Table.Capacity</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Edit Form -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Uppdatera bokningsdetaljer
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" asp-route-id="@bookingId" method="post">
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="BookingDateTime" class="form-label">
+                                        <i class="fas fa-calendar text-primary me-1"></i>
+                                        @Html.DisplayNameFor(m => m.BookingDateTime)
+                                    </label>
+                                    <input asp-for="BookingDateTime"
+                                           class="form-control @(ViewData.ModelState["BookingDateTime"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                           type="datetime-local" />
+                                    <span asp-validation-for="BookingDateTime" class="invalid-feedback"></span>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Lämna tomt för att behålla nuvarande datum och tid
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="NumberOfGuests" class="form-label">
+                                        <i class="fas fa-users text-primary me-1"></i>
+                                        @Html.DisplayNameFor(m => m.NumberOfGuests)
+                                    </label>
+                                    <input asp-for="NumberOfGuests"
+                                           class="form-control @(ViewData.ModelState["NumberOfGuests"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                           type="number" min="1" max="20" />
+                                    <span asp-validation-for="NumberOfGuests" class="invalid-feedback"></span>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        @if (booking != null)
+                                        {
+                                            <span>Bordets kapacitet: @booking.Table.Capacity platser | Lämna tomt för att behålla @booking.NumberOfGuests gäster</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Antal gäster måste vara mellan 1 och 20</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="SpecialRequests" class="form-label">
+                                <i class="fas fa-comment text-primary me-1"></i>
+                                @Html.DisplayNameFor(m => m.SpecialRequests)
+                            </label>
+                            <textarea asp-for="SpecialRequests"
+                                      class="form-control @(ViewData.ModelState["SpecialRequests"]?.Errors.Count > 0 ? "is-invalid" : "")"
+                                      rows="3"
+                                      placeholder="Allergier, specialkost, barnstol, etc..."></textarea>
+                            <span asp-validation-for="SpecialRequests" class="invalid-feedback"></span>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Valfritt - lägg till eller ändra specialönskemål
+                            </div>
+                        </div>
+
+                        <!-- Warning Messages -->
+                        <div class="alert alert-warning">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-exclamation-triangle fa-lg"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">Viktiga förändringar</h6>
+                                    <ul class="mb-0 small">
+                                        <li>Ändring av datum eller tid kontrolleras mot andra bokningar</li>
+                                        <li>Antal gäster kan inte överstiga bordets kapacitet</li>
+                                        <li>Lämna fält tomma för att behålla nuvarande värden</li>
+                                        <li>Kunden kontaktas inte automatiskt om ändringar</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="@Url.Action("Details", new { id = bookingId })"
+                               class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                Avbryt
+                            </a>
+
+                            <div>
+                                <a href="@Url.Action("Index")" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-list me-2"></i>
+                                    Till bokningslista
+                                </a>
+
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save me-2"></i>
+                                    Spara ändringar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            @if (booking != null)
+            {
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-bolt me-2"></i>
+                            Snabbåtgärder
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <!-- View Details -->
+                            <a href="@Url.Action("Details", new { id = booking.Id })"
+                               class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-eye me-1"></i>
+                                Visa detaljer
+                            </a>
+
+                            <!-- Delete -->
+                            <form asp-action="Delete" asp-route-id="@booking.Id"
+                                  method="post" class="d-inline"
+                                  onsubmit="return confirm('Är du säker på att du vill ta bort denna bokning för @booking.Customer.Name?')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Ta bort bokning
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

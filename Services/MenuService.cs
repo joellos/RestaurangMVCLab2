@@ -1,15 +1,27 @@
 ﻿using RestaurangMVCLab2.DTOs;
+using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
+using System.Text.Json;
 
 namespace RestaurangMVCLab2.Services
 {
     public class MenuService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<MenuService> _logger;
 
-        public MenuService(HttpClient httpClient)
+        public MenuService(HttpClient httpClient, ILogger<MenuService> logger)
         {
             _httpClient = httpClient;
+            _logger = logger;
+ 
+        }
+        public void SetAuthToken(string token)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            _logger.LogInformation("🔑 JWT token set for TableService");
         }
 
         public async Task<List<MenuItemResponseDto>> GetMenuItemsAsync()
@@ -47,16 +59,24 @@ namespace RestaurangMVCLab2.Services
         // Admin metoder - kräver JWT token
         public async Task<MenuItemResponseDto?> CreateMenuItemAsync(CreateMenuItemDto dto, string jwtToken)
         {
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
-
-            var response = await _httpClient.PostAsJsonAsync("menuitem", dto);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return await response.Content.ReadFromJsonAsync<MenuItemResponseDto>();
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await _httpClient.PostAsJsonAsync("menuitem", dto);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<MenuItemResponseDto>();
+                }
+                return null;
             }
-            return null;
+
+            catch
+            {
+                return null;
+            }
         }
 
         public async Task<MenuItemResponseDto?> UpdateMenuItemAsync(int id, UpdateMenuItemDto dto, string jwtToken)

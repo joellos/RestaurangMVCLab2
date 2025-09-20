@@ -19,7 +19,10 @@ builder.Services.AddHttpClient<AuthService>(client =>
     client.BaseAddress = new Uri("https://localhost:7135/api/");
 });
 
-
+builder.Services.AddHttpClient<BookingService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7135/api/");
+});
 
 builder.Services.AddHttpClient<TableService>(client =>
 {
