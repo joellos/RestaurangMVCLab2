@@ -100,5 +100,15 @@ namespace RestaurangMVCLab2.Services
             return response;
         }
 
+        public async Task<List<MenuItemResponseDto>> GetAllMenuItemsForAdminAsync(string jwtToken)
+        {
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwtToken);
+
+            var response = await _httpClient.GetFromJsonAsync<List<MenuItemResponseDto>>("menuitem/admin/all");
+
+            return response ?? new List<MenuItemResponseDto>();
+        }
+
     }
 }

@@ -1,12 +1,10 @@
-﻿// Controllers/Admin/TableController.cs
-using Microsoft.AspNetCore.Mvc;
-using RestaurangMVCLab2.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using RestaurangMVCLab2.DTOs;  
 
-using RestaurantMVCLab2.Services;
+using RestaurangMVCLab2.Services;
 
-namespace RestaurantMVCLab2.Controllers
+namespace RestaurangMVCLab2.Controllers 
 {
- 
     public class TableController : Controller
     {
         private readonly TableService _tableService;
@@ -29,7 +27,7 @@ namespace RestaurantMVCLab2.Controllers
             return true;
         }
 
-        // GET: Admin/Table
+        // GET: Table/Index
         public async Task<IActionResult> Index()
         {
             if (!IsAdminAuthenticated())
@@ -57,7 +55,7 @@ namespace RestaurantMVCLab2.Controllers
             }
         }
 
-        // GET: Admin/Table/Create
+        // GET: Table/Create
         public IActionResult Create()
         {
             if (!IsAdminAuthenticated())
@@ -69,7 +67,7 @@ namespace RestaurantMVCLab2.Controllers
             return View();
         }
 
-        // POST: Admin/Table/Create
+        // POST: Table/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateTableDto model)
@@ -99,7 +97,7 @@ namespace RestaurantMVCLab2.Controllers
             }
         }
 
-        // GET: Admin/Table/Edit/5
+        // GET: Table/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
             if (!IsAdminAuthenticated())
@@ -128,7 +126,7 @@ namespace RestaurantMVCLab2.Controllers
             return View(updateDto);
         }
 
-        // POST: Admin/Table/Edit/5
+        // POST: Table/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, UpdateTableDto model)
@@ -160,7 +158,7 @@ namespace RestaurantMVCLab2.Controllers
             }
         }
 
-        // POST: Admin/Table/Delete/5
+        // POST: Table/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
@@ -185,7 +183,7 @@ namespace RestaurantMVCLab2.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: Admin/Table/ToggleActive/5
+        // POST: Table/ToggleActive/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int id)

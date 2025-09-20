@@ -90,14 +90,20 @@
         </div>
     }
 
-    @* Menyrätter *@
+    @* Menyrätter - FIXED VERSION *@
     @if (Model.Any())
     {
         <div class="row">
             @foreach (var item in Model)
             {
                 <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
+                    <div class="card h-100 position-relative">
+                        @* Populär badge - flyttad utanför bilden *@
+                        @if (item.IsPopular)
+                        {
+                            <span class="badge bg-danger position-absolute" style="top: 10px; right: 10px; z-index: 10;">Populär</span>
+                        }
+
                         @* Bild (om den finns) *@
                         @if (!string.IsNullOrEmpty(item.ImageUrl))
                         {
@@ -109,14 +115,9 @@
                                 <i class="fas fa-utensils fa-3x text-muted"></i>
                             </div>
                         }
+
                         <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title">@item.Name</h5>
-                                @if (item.IsPopular)
-                                {
-                                    <span class="badge bg-danger">Populär</span>
-                                }
-                            </div>
+                            <h5 class="card-title">@item.Name</h5>
                             <p class="card-text flex-grow-1">@item.Description</p>
                             <div class="mt-auto">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -126,24 +127,32 @@
                             </div>
                         </div>
 
-                        @* Admin: Redigera/Ta bort knappar *@
+                        @* Admin: Redigera/Ta bort knappar - FIXED *@
                         @if (isAdmin)
                         {
                             <div class="card-footer">
-                                <div class="btn-group w-100" role="group">
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Redigera
-                                    </a>
-                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Är du säker på att du vill ta bort denna rätt?')">
-                                            <i class="fas fa-trash"></i> Ta bort
-                                        </button>
-                                    </form>
-                                    <form asp-action="TogglePopular" asp-route-id="@item.Id" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-info btn-sm">
-                                            <i class="fas fa-star"></i> @(item.IsPopular ? "Ta bort populär" : "Gör populär")
-                                        </button>
-                                    </form>
+                                <!-- ANVÄND GRID ISTÄLLET FÖR BTN-GROUP -->
+                                <div class="row g-1">
+                                    <div class="col-12 col-sm-4">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm w-100">
+                                            <i class="fas fa-edit"></i> Redigera
+                                        </a>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="w-100">
+                                            <button type="submit" class="btn btn-danger btn-sm w-100"
+                                                    onclick="return confirm('Är du säker på att du vill ta bort denna rätt?')">
+                                                <i class="fas fa-trash"></i> <span class="d-none d-sm-inline">Ta bort</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="col-6 col-sm-4">
+                                        <form asp-action="TogglePopular" asp-route-id="@item.Id" method="post" class="w-100">
+                                            <button type="submit" class="btn btn-info btn-sm w-100" title="@(item.IsPopular ? "Ta bort populär" : "Gör populär")">
+                                                <i class="fas fa-star"></i> <span class="d-none d-lg-inline">@(item.IsPopular ? "Ej pop" : "Populär")</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -153,3 +162,56 @@
         </div>
     }
 </div>
+
+<style>
+    /* EXTRA CSS FÖR ATT FIXA KNAPP-PROBLEM */
+    .card-footer .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Säkerställ samma höjd på alla knappar */
+    .card-footer .row .col-12,
+    .card-footer .row .col-6,
+    .card-footer .row .col-sm-4 {
+        min-height: 32px;
+        display: flex;
+        align-items: stretch;
+    }
+
+    .card-footer .btn,
+    .card-footer form {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Fix för card-img-top ikoner */
+    .card-img-top .fas {
+        font-size: 3rem !important;
+    }
+
+    /* Responsiv text för knappar */
+    @@media (max-width: 576px) {
+        .card-footer .btn
+
+    {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    }
+
+    @@media (min-width: 992px) {
+        .card-footer .btn
+
+    {
+        font-size: 0.85rem;
+    }
+
+    }
+</style>

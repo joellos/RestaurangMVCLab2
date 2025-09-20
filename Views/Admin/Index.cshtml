@@ -1,21 +1,109 @@
 ﻿@{
     ViewData["Title"] = "Admin Dashboard";
+    var stats = ViewBag.Statistics;
 }
 
 <div class="container">
-    <h1>Admin Dashboard</h1>
-    <p>Välkommen, administratör!</p>
+    <h1 class="mb-4">Admin Dashboard</h1>
+    <p class="text-muted">Välkommen, administratör!</p>
 
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5>Hantera Meny</h5>
-                    <p>Lägg till, redigera eller ta bort rätter</p>
-                    <a href="#" class="btn btn-primary">Hantera Meny</a>
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <!-- Statistics Cards -->
+    <div class="row mb-5">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-chair fa-3x mb-3"></i>
+                    <h2>@stats.TotalTables</h2>
+                    <p class="mb-0">Totalt Bord</p>
+                    <small>(@stats.ActiveTables aktiva)</small>
                 </div>
             </div>
         </div>
-        <!-- Fler kort kommer här senare -->
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-utensils fa-3x mb-3"></i>
+                    <h2>@stats.TotalMenuItems</h2>
+                    <p class="mb-0">Menyrätter</p>
+                    <small>(@stats.AvailableMenuItems tillgängliga)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-check fa-3x mb-3"></i>
+                    <h2>@stats.TotalBookings</h2>
+                    <p class="mb-0">Bokningar</p>
+                    <small>(@stats.TodayBookings idag)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x mb-3"></i>
+                    <h2>@stats.TotalCapacity</h2>
+                    <p class="mb-0">Total Kapacitet</p>
+                    <small>(@stats.ActiveTables aktiva bord)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-utensils fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Hantera Meny</h5>
+                    <p class="card-text">Lägg till, redigera eller ta bort rätter från menyn</p>
+                    <a asp-controller="Menu" asp-action="Index" class="btn btn-primary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        Hantera Meny
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Hantera Bokningar</h5>
+                    <p class="card-text">Se och hantera alla kundbokningar och reservationer</p>
+                    <a asp-controller="Booking" asp-action="Admin" class="btn btn-success">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        Hantera Bokningar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chair fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">Hantera Bord</h5>
+                    <p class="card-text">Lägg till, redigera eller ta bort bord och deras kapacitet</p>
+                    <a asp-controller="Table" asp-action="Index" class="btn btn-info">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        Hantera Bord
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

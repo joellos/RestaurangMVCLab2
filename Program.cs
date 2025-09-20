@@ -1,6 +1,6 @@
 
 using RestaurangMVCLab2.Services;
-using RestaurantMVCLab2.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 

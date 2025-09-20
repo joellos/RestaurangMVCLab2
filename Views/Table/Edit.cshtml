@@ -197,7 +197,8 @@
                               method="post" class="d-inline">
                             @Html.AntiForgeryToken()
                             <button type="submit"
-                                    class="btn btn-outline-@(currentTable?.IsActive == true ? "warning" : "success") btn-sm"
+                                    class="btn 
+line-@(currentTable?.IsActive == true ? "warning" : "success") btn-sm"
                                     onclick="return confirm('@(currentTable?.IsActive == true ? "Inaktivera" : "Aktivera") bord @currentTable?.TableNumber?')">
                                 <i class="fas fa-@(currentTable?.IsActive == true ? "pause" : "play") me-1"></i>
                                 @(currentTable?.IsActive == true ? "Inaktivera bord" : "Aktivera bord")
