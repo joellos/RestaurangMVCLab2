@@ -1,9 +1,11 @@
-﻿using RestaurangMVCLab2.DTOs;  
+﻿using RestaurangMVCLab2.DTOs;
+using RestaurangMVCLab2.Models;
 using System.Net.Http.Headers;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 
-namespace RestaurangMVCLab2.Services  
+namespace RestaurangMVCLab2.Services
 {
     public class TableService
     {
@@ -21,17 +23,16 @@ namespace RestaurangMVCLab2.Services
             };
         }
 
-        // Sätt JWT token för admin-anrop
+        // AUTH METHOD - same pattern som BookingService
         public void SetAuthToken(string token)
         {
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
-
             _logger.LogInformation("🔑 JWT token set for TableService");
         }
 
-        // Hämta alla bord (admin)
-        public async Task<List<TableResponseDto>> GetAllTablesAsync()
+        // GET ALL TABLES (admin) - api/tables
+        public async Task<ServiceResponse> GetAllTablesAsync()
         {
             try
             {
@@ -50,109 +51,110 @@ namespace RestaurangMVCLab2.Services
                     _logger.LogWarning("⚠️ NO Authorization header set!");
                 }
 
-                // VIKTIGT: Använd bara "tables" inte "api/tables" - BaseAddress innehåller redan "/api/"
                 var response = await _httpClient.GetAsync("tables");
-
                 _logger.LogInformation("📡 API Response: {StatusCode}", response.StatusCode);
 
-                if (response.IsSuccessStatusCode)
-                {
-                    var json = await response.Content.ReadAsStringAsync();
-                    _logger.LogInformation("✅ API returned data length: {Length}", json.Length);
-                    _logger.LogInformation("📄 First 200 chars: {JsonPreview}",
-                        json.Length > 200 ? json.Substring(0, 200) + "..." : json);
-
-                    var tables = JsonSerializer.Deserialize<List<TableResponseDto>>(json, _jsonOptions);
-                    _logger.LogInformation("🎯 Deserialized {Count} tables", tables?.Count ?? 0);
-
-                    return tables ?? new List<TableResponseDto>();
-                }
-                else
+                if (!response.IsSuccessStatusCode)
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("❌ API Error: {StatusCode} - {Error}",
-                        response.StatusCode, errorContent);
-
-                    return new List<TableResponseDto>();
+                    _logger.LogError("❌ API Error: {StatusCode} - {Error}", response.StatusCode, errorContent);
+                    return ServiceResponse.Failure($"API returned {response.StatusCode}: {response.ReasonPhrase}");
                 }
+
+                var json = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("✅ API returned data length: {Length}", json.Length);
+
+                var tables = JsonSerializer.Deserialize<List<TableResponseDto>>(json, _jsonOptions);
+                _logger.LogInformation("🎯 Deserialized {Count} tables", tables?.Count ?? 0);
+
+                return ServiceResponse.Success(tables ?? new List<TableResponseDto>(),
+                    $"Successfully loaded {tables?.Count ?? 0} tables");
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, "🌐 HTTP Request failed - API might not be running at https://localhost:7135");
-                return new List<TableResponseDto>();
+                _logger.LogError(ex, "🌐 HTTP Request failed - API might not be running");
+                return ServiceResponse.Failure($"Network error: {ex.Message}");
             }
             catch (TaskCanceledException ex)
             {
                 _logger.LogError(ex, "⏱️ Request timeout - API took too long to respond");
-                return new List<TableResponseDto>();
+                return ServiceResponse.Failure("Request timeout - API took too long to respond");
             }
             catch (JsonException ex)
             {
                 _logger.LogError(ex, "🔧 JSON Deserialization failed");
-                return new List<TableResponseDto>();
+                return ServiceResponse.Failure("Failed to parse API response");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Unexpected error in GetAllTablesAsync");
-                return new List<TableResponseDto>();
+                return ServiceResponse.Failure($"Unexpected error: {ex.Message}");
             }
         }
 
-        // Hämta aktiva bord (admin)
-        public async Task<List<TableResponseDto>> GetActiveTablesAsync()
+        // GET ACTIVE TABLES (admin) - api/tables/active
+        public async Task<ServiceResponse> GetActiveTablesAsync()
         {
             try
             {
                 _logger.LogInformation("🔍 Fetching active tables...");
-                var response = await _httpClient.GetAsync("tables/active");  // ← ÄNDRAT från "api/tables/active"
-
+                var response = await _httpClient.GetAsync("tables/active");
                 _logger.LogInformation("📡 Active tables response: {StatusCode}", response.StatusCode);
 
-                if (response.IsSuccessStatusCode)
+                if (!response.IsSuccessStatusCode)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var tables = JsonSerializer.Deserialize<List<TableResponseDto>>(json, _jsonOptions);
-                    _logger.LogInformation("✅ Got {Count} active tables", tables?.Count ?? 0);
-                    return tables ?? new List<TableResponseDto>();
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return ServiceResponse.Failure($"API returned {response.StatusCode}: {response.ReasonPhrase}");
                 }
 
-                return new List<TableResponseDto>();
+                var json = await response.Content.ReadAsStringAsync();
+                var tables = JsonSerializer.Deserialize<List<TableResponseDto>>(json, _jsonOptions);
+                _logger.LogInformation("✅ Got {Count} active tables", tables?.Count ?? 0);
+
+                return ServiceResponse.Success(tables ?? new List<TableResponseDto>(),
+                    $"Found {tables?.Count ?? 0} active tables");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error in GetActiveTablesAsync");
-                return new List<TableResponseDto>();
+                return ServiceResponse.Failure($"Error fetching active tables: {ex.Message}");
             }
         }
 
-        // Hämta specifikt bord (admin)
-        public async Task<TableResponseDto?> GetTableByIdAsync(int id)
+        // GET TABLE BY ID (admin) - api/tables/{id}
+        public async Task<ServiceResponse> GetTableByIdAsync(int id)
         {
             try
             {
                 _logger.LogInformation("🔍 Fetching table {TableId}...", id);
-                var response = await _httpClient.GetAsync($"tables/{id}");  // ← ÄNDRAT från "api/tables/{id}"
+                var response = await _httpClient.GetAsync($"tables/{id}");
 
-                if (response.IsSuccessStatusCode)
+                if (response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    var json = await response.Content.ReadAsStringAsync();
-                    var table = JsonSerializer.Deserialize<TableResponseDto>(json, _jsonOptions);
-                    _logger.LogInformation("✅ Got table {TableNumber}", table?.TableNumber);
-                    return table;
+                    return ServiceResponse.Failure($"Table with ID {id} not found");
                 }
 
-                _logger.LogWarning("❌ Table {TableId} not found: {StatusCode}", id, response.StatusCode);
-                return null;
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return ServiceResponse.Failure($"API returned {response.StatusCode}: {response.ReasonPhrase}");
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var table = JsonSerializer.Deserialize<TableResponseDto>(json, _jsonOptions);
+                _logger.LogInformation("✅ Got table {TableNumber}", table?.TableNumber);
+
+                return ServiceResponse.Success(table, "Table loaded successfully");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error getting table {TableId}", id);
-                return null;
+                return ServiceResponse.Failure($"Error fetching table: {ex.Message}");
             }
         }
 
-        // Skapa nytt bord (admin)
-        public async Task<(bool Success, string Message, TableResponseDto? Table)> CreateTableAsync(CreateTableDto createDto)
+        // CREATE TABLE (admin) - POST api/tables
+        public async Task<ServiceResponse> CreateTableAsync(CreateTableDto createDto)
         {
             try
             {
@@ -162,114 +164,141 @@ namespace RestaurangMVCLab2.Services
                 var json = JsonSerializer.Serialize(createDto, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PostAsync("tables", content);  // ← ÄNDRAT från "api/tables"
+                var response = await _httpClient.PostAsync("tables", content);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseJson = await response.Content.ReadAsStringAsync();
                     var table = JsonSerializer.Deserialize<TableResponseDto>(responseJson, _jsonOptions);
                     _logger.LogInformation("✅ Created table {TableNumber}", table?.TableNumber);
-                    return (true, "Bord skapat!", table);
+                    return ServiceResponse.Success(table, "Table created successfully");
+                }
+                else if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return ServiceResponse.Failure($"Validation error: {errorContent}");
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
                     _logger.LogError("❌ Failed to create table: {StatusCode} - {Error}",
                         response.StatusCode, errorContent);
-                    return (false, $"Kunde inte skapa bord: {response.StatusCode}", null);
+                    return ServiceResponse.Failure($"Failed to create table: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "💥 Error creating table");
-                return (false, $"Fel: {ex.Message}", null);
+                return ServiceResponse.Failure($"Error creating table: {ex.Message}");
             }
         }
 
-        // Uppdatera bord (admin)
-        public async Task<(bool Success, string Message, TableResponseDto? Table)> UpdateTableAsync(int id, UpdateTableDto updateDto)
+        // UPDATE TABLE (admin) - PUT api/tables/{id}
+        public async Task<ServiceResponse> UpdateTableAsync(int id, UpdateTableDto updateDto)
         {
             try
             {
+                _logger.LogInformation("🔄 Updating table {TableId}", id);
+
                 var json = JsonSerializer.Serialize(updateDto, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await _httpClient.PutAsync($"tables/{id}", content);  // ← ÄNDRAT från "api/tables/{id}"
+                var response = await _httpClient.PutAsync($"tables/{id}", content);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseJson = await response.Content.ReadAsStringAsync();
                     var table = JsonSerializer.Deserialize<TableResponseDto>(responseJson, _jsonOptions);
-                    return (true, "Bord uppdaterat!", table);
+                    _logger.LogInformation("✅ Updated table {TableNumber}", table?.TableNumber);
+                    return ServiceResponse.Success(table, "Table updated successfully");
                 }
-                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    return (false, "Bordet hittades inte.", null);
+                    return ServiceResponse.Failure($"Table with ID {id} not found");
+                }
+                else if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return ServiceResponse.Failure($"Validation error: {errorContent}");
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    return (false, $"Kunde inte uppdatera bord: {response.StatusCode}", null);
+                    return ServiceResponse.Failure($"Failed to update table: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                return (false, $"Fel: {ex.Message}", null);
+                _logger.LogError(ex, "💥 Error updating table {TableId}", id);
+                return ServiceResponse.Failure($"Error updating table: {ex.Message}");
             }
         }
 
-        // Ta bort bord (admin)
-        public async Task<(bool Success, string Message)> DeleteTableAsync(int id)
+        // DELETE TABLE (admin) - DELETE api/tables/{id}
+        public async Task<ServiceResponse> DeleteTableAsync(int id)
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"tables/{id}");  // ← ÄNDRAT från "api/tables/{id}"
+                _logger.LogInformation("🗑️ Deleting table {TableId}", id);
+
+                var response = await _httpClient.DeleteAsync($"tables/{id}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    return (true, "Bord borttaget!");
+                    _logger.LogInformation("✅ Deleted table {TableId}", id);
+                    return ServiceResponse.Success("Table deleted successfully");
                 }
-                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    return (false, "Bordet hittades inte.");
+                    return ServiceResponse.Failure($"Table with ID {id} not found");
+                }
+                else if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return ServiceResponse.Failure($"Cannot delete table: {errorContent}");
                 }
                 else
                 {
-                    return (false, $"Kunde inte ta bort bord: {response.StatusCode}");
+                    return ServiceResponse.Failure($"Failed to delete table: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                return (false, $"Fel: {ex.Message}");
+                _logger.LogError(ex, "💥 Error deleting table {TableId}", id);
+                return ServiceResponse.Failure($"Error deleting table: {ex.Message}");
             }
         }
 
-        // Toggle aktivt/inaktivt (admin)
-        public async Task<(bool Success, string Message, TableResponseDto? Table)> ToggleActiveAsync(int id)
+        // TOGGLE ACTIVE/INACTIVE (admin) - PUT api/tables/{id}/toggle-active
+        public async Task<ServiceResponse> ToggleActiveAsync(int id)
         {
             try
             {
-                var response = await _httpClient.PutAsync($"tables/{id}/toggle-active", null);  // ← ÄNDRAT från "api/tables/{id}/toggle-active"
+                _logger.LogInformation("🔄 Toggling active status for table {TableId}", id);
+
+                var response = await _httpClient.PutAsync($"tables/{id}/toggle-active", null);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var responseJson = await response.Content.ReadAsStringAsync();
                     var table = JsonSerializer.Deserialize<TableResponseDto>(responseJson, _jsonOptions);
-                    var status = table?.IsActive == true ? "aktiverat" : "inaktiverat";
-                    return (true, $"Bord {status}!", table);
+                    var status = table?.IsActive == true ? "activated" : "deactivated";
+                    _logger.LogInformation("✅ Table {TableId} {Status}", id, status);
+                    return ServiceResponse.Success(table, $"Table {status} successfully");
                 }
-                else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    return (false, "Bordet hittades inte.", null);
+                    return ServiceResponse.Failure($"Table with ID {id} not found");
                 }
                 else
                 {
-                    return (false, $"Kunde inte ändra status: {response.StatusCode}", null);
+                    return ServiceResponse.Failure($"Failed to toggle table status: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                return (false, $"Fel: {ex.Message}", null);
+                _logger.LogError(ex, "💥 Error toggling status for table {TableId}", id);
+                return ServiceResponse.Failure($"Error toggling table status: {ex.Message}");
             }
         }
     }

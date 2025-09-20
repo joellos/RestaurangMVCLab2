@@ -1,6 +1,6 @@
-﻿using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RestaurangMVCLab2.DTOs;
+using RestaurangMVCLab2.Models;
 using RestaurangMVCLab2.Services;
 
 namespace RestaurangMVCLab2.Controllers
@@ -14,31 +14,67 @@ namespace RestaurangMVCLab2.Controllers
             _menuService = menuService;
         }
 
+        // Helper method för admin-autentisering (samma pattern som BookingController)
+        private bool IsAdminAuthenticated()
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (string.IsNullOrEmpty(token)) return false;
+
+            _menuService.SetAuthToken(token);
+            return true;
+        }
+
+        // GET: /Menu
         public async Task<IActionResult> Index(string? search, string? category)
         {
             try
             {
-                List<MenuItemResponseDto> menuItems;
+                ServiceResponse result;
+
                 // Bestäm vilken metod som ska anropas
                 if (!string.IsNullOrEmpty(search))
                 {
                     // Om det finns sökterm - använd search
-                    menuItems = await _menuService.SearchMenuItemsAsync(search);
+                    result = await _menuService.SearchMenuItemsAsync(search);
                 }
                 else if (!string.IsNullOrEmpty(category))
                 {
                     // Om det finns kategori - filtrera på kategori  
-                    menuItems = await _menuService.GetMenuItemByCategoryAsync(category);
+                    result = await _menuService.GetMenuItemByCategoryAsync(category);
                 }
                 else
                 {
-                    // Annars - visa alla (som förut)
-                    menuItems = await _menuService.GetMenuItemsAsync();
+                    // Annars - visa alla (eller alla för admin)
+                    if (IsAdminAuthenticated())
+                    {
+                        result = await _menuService.GetAllMenuItemsForAdminAsync();
+                    }
+                    else
+                    {
+                        result = await _menuService.GetMenuItemsAsync();
+                    }
                 }
+
+                List<MenuItemResponseDto> menuItems;
+                if (result.Succeeded)
+                {
+                    menuItems = result.GetData<List<MenuItemResponseDto>>() ?? new List<MenuItemResponseDto>();
+                    ViewBag.SuccessMessage = result.Message;
+                }
+                else
+                {
+                    menuItems = new List<MenuItemResponseDto>();
+                    ViewBag.ErrorMessage = result.Message;
+                }
+
                 // Hämta kategorier för dropdown
-                var categories = await _menuService.GetCategoriesAsync();
+                var categoriesResult = await _menuService.GetCategoriesAsync();
+                if (categoriesResult.Succeeded)
+                {
+                    ViewBag.Categories = categoriesResult.GetData<List<string>>() ?? new List<string>();
+                }
+
                 // Skicka data till vyn
-                ViewBag.Categories = categories;
                 ViewBag.CurrentSearch = search;
                 ViewBag.CurrentCategory = category;
                 return View(menuItems);
@@ -50,15 +86,22 @@ namespace RestaurangMVCLab2.Controllers
             }
         }
 
-        // ============ ADMIN METHODS - LÄGG TILL DESSA ============
-
         // CREATE - GET
         public async Task<IActionResult> Create()
         {
-            if (!IsAdmin()) return RedirectToAction("Index");
+            if (!IsAdminAuthenticated())
+            {
+                TempData["ErrorMessage"] = "Du måste logga in som administratör.";
+                return RedirectToAction("Login", "Auth");
+            }
 
-            var categories = await _menuService.GetCategoriesAsync();
-            ViewBag.Categories = categories;
+            // Hämta kategorier för dropdown
+            var categoriesResult = await _menuService.GetCategoriesAsync();
+            if (categoriesResult.Succeeded)
+            {
+                ViewBag.Categories = categoriesResult.GetData<List<string>>() ?? new List<string>();
+            }
+
             return View();
         }
 
@@ -67,38 +110,39 @@ namespace RestaurangMVCLab2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateMenuItemDto dto)
         {
-            if (!IsAdmin()) return RedirectToAction("Index");
+            if (!IsAdminAuthenticated())
+            {
+                TempData["ErrorMessage"] = "Du måste logga in som administratör.";
+                return RedirectToAction("Login", "Auth");
+            }
 
             if (!ModelState.IsValid)
             {
-                var categories = await _menuService.GetCategoriesAsync();
-                ViewBag.Categories = categories;
+                // Hämta kategorier igen för dropdown vid fel
+                var categoriesResult = await _menuService.GetCategoriesAsync();
+                if (categoriesResult.Succeeded)
+                {
+                    ViewBag.Categories = categoriesResult.GetData<List<string>>() ?? new List<string>();
+                }
                 return View(dto);
             }
 
-            try
-            {
-                var token = HttpContext.Session.GetString("JwtToken");
-                var result = await _menuService.CreateMenuItemAsync(dto, token!);
+            var result = await _menuService.CreateMenuItemAsync(dto);
 
-                if (result != null)
-                {
-                    TempData["SuccessMessage"] = "Rätten har lagts till!";
-                    return RedirectToAction("Index");
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Kunde inte lägga till rätten.");
-                    var categories = await _menuService.GetCategoriesAsync();
-                    ViewBag.Categories = categories;
-                    return View(dto);
-                }
-            }
-            catch (Exception ex)
+            if (result.Succeeded)
             {
-                ModelState.AddModelError("", "Ett fel uppstod: " + ex.Message);
-                var categories = await _menuService.GetCategoriesAsync();
-                ViewBag.Categories = categories;
+                TempData["SuccessMessage"] = result.Message;
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = result.Message;
+                // Hämta kategorier igen för dropdown vid fel
+                var categoriesResult = await _menuService.GetCategoriesAsync();
+                if (categoriesResult.Succeeded)
+                {
+                    ViewBag.Categories = categoriesResult.GetData<List<string>>() ?? new List<string>();
+                }
                 return View(dto);
             }
         }
@@ -106,40 +150,47 @@ namespace RestaurangMVCLab2.Controllers
         // EDIT - GET
         public async Task<IActionResult> Edit(int id)
         {
-            if (!IsAdmin()) return RedirectToAction("Index");
-
-            try
+            if (!IsAdminAuthenticated())
             {
-                var token = HttpContext.Session.GetString("JwtToken");
-                var menuItem = await _menuService.GetMenuItemByIdAsync(id, token!);
-                if (menuItem == null)
-                {
-                    TempData["ErrorMessage"] = "Rätten kunde inte hittas.";
-                    return RedirectToAction("Index");
-                }
-
-                var updateDto = new UpdateMenuItemDto
-                {
-                    Name = menuItem.Name,
-                    Description = menuItem.Description,
-                    Price = menuItem.Price,
-                    Category = menuItem.Category,
-                    ImageUrl = menuItem.ImageUrl,
-                    IsPopular = menuItem.IsPopular,
-                    IsAvailable = menuItem.IsAvailable
-                };
-
-                ViewBag.MenuItemId = id;
-                var categories = await _menuService.GetCategoriesAsync();
-                ViewBag.Categories = categories;
-
-                return View(updateDto);
+                TempData["ErrorMessage"] = "Du måste logga in som administratör.";
+                return RedirectToAction("Login", "Auth");
             }
-            catch (Exception ex)
+
+            var result = await _menuService.GetMenuItemByIdAsync(id);
+            if (!result.Succeeded)
             {
-                TempData["ErrorMessage"] = "Kunde inte hämta rätten.";
+                TempData["ErrorMessage"] = result.Message;
                 return RedirectToAction("Index");
             }
+
+            var menuItem = result.GetData<MenuItemResponseDto>();
+            if (menuItem == null)
+            {
+                TempData["ErrorMessage"] = "Rätten kunde inte hittas.";
+                return RedirectToAction("Index");
+            }
+
+            var updateDto = new UpdateMenuItemDto
+            {
+                Name = menuItem.Name,
+                Description = menuItem.Description,
+                Price = menuItem.Price,
+                Category = menuItem.Category,
+                ImageUrl = menuItem.ImageUrl,
+                IsPopular = menuItem.IsPopular,
+                IsAvailable = menuItem.IsAvailable
+            };
+
+            ViewBag.MenuItemId = id;
+
+            // Hämta kategorier för dropdown
+            var categoriesResult = await _menuService.GetCategoriesAsync();
+            if (categoriesResult.Succeeded)
+            {
+                ViewBag.Categories = categoriesResult.GetData<List<string>>() ?? new List<string>();
+            }
+
+            return View(updateDto);
         }
 
         // EDIT - POST
@@ -147,98 +198,77 @@ namespace RestaurangMVCLab2.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, UpdateMenuItemDto dto)
         {
-            if (!IsAdmin()) return RedirectToAction("Index");
+            if (!IsAdminAuthenticated())
+            {
+                TempData["ErrorMessage"] = "Du måste logga in som administratör.";
+                return RedirectToAction("Login", "Auth");
+            }
 
             if (!ModelState.IsValid)
             {
                 ViewBag.MenuItemId = id;
-                var categories = await _menuService.GetCategoriesAsync();
-                ViewBag.Categories = categories;
+                // Hämta kategorier igen för dropdown vid fel
+                var categoriesResult = await _menuService.GetCategoriesAsync();
+                if (categoriesResult.Succeeded)
+                {
+                    ViewBag.Categories = categoriesResult.GetData<List<string>>() ?? new List<string>();
+                }
                 return View(dto);
             }
 
-            try
-            {
-                var token = HttpContext.Session.GetString("JwtToken");
-                var result = await _menuService.UpdateMenuItemAsync(id, dto, token!);
+            var result = await _menuService.UpdateMenuItemAsync(id, dto);
 
-                if (result != null)
-                {
-                    TempData["SuccessMessage"] = "Rätten har uppdaterats!";
-                    return RedirectToAction("Index");
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Kunde inte uppdatera rätten.");
-                    ViewBag.MenuItemId = id;
-                    var categories = await _menuService.GetCategoriesAsync();
-                    ViewBag.Categories = categories;
-                    return View(dto);
-                }
-            }
-            catch (Exception ex)
+            if (result.Succeeded)
             {
-                ModelState.AddModelError("", "Ett fel uppstod: " + ex.Message);
+                TempData["SuccessMessage"] = result.Message;
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = result.Message;
                 ViewBag.MenuItemId = id;
-                var categories = await _menuService.GetCategoriesAsync();
-                ViewBag.Categories = categories;
+                // Hämta kategorier igen för dropdown vid fel
+                var categoriesResult = await _menuService.GetCategoriesAsync();
+                if (categoriesResult.Succeeded)
+                {
+                    ViewBag.Categories = categoriesResult.GetData<List<string>>() ?? new List<string>();
+                }
                 return View(dto);
             }
         }
 
         // DELETE
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            if (!IsAdmin()) return RedirectToAction("Index");
-
-            try
+            if (!IsAdminAuthenticated())
             {
-                var token = HttpContext.Session.GetString("JwtToken");
-                var success = await _menuService.DeleteMenuItemAsync(id, token!);
-
-                if (success)
-                    TempData["SuccessMessage"] = "Rätten har tagits bort!";
-                else
-                    TempData["ErrorMessage"] = "Kunde inte ta bort rätten.";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Ett fel uppstod: " + ex.Message;
+                TempData["ErrorMessage"] = "Du måste logga in som administratör.";
+                return RedirectToAction("Login", "Auth");
             }
 
+            var result = await _menuService.DeleteMenuItemAsync(id);
+
+            TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
             return RedirectToAction("Index");
         }
 
         // TOGGLE POPULAR
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> TogglePopular(int id)
         {
-            if (!IsAdmin()) return RedirectToAction("Index");
-
-            try
+            if (!IsAdminAuthenticated())
             {
-                var token = HttpContext.Session.GetString("JwtToken");
-                var success = await _menuService.TogglePopularAsync(id, token!);
-
-                if (success)
-                    TempData["SuccessMessage"] = "Populärstatus har ändrats!";
-                else
-                    TempData["ErrorMessage"] = "Kunde inte ändra populärstatus.";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = "Ett fel uppstod: " + ex.Message;
+                TempData["ErrorMessage"] = "Du måste logga in som administratör.";
+                return RedirectToAction("Login", "Auth");
             }
 
+            var result = await _menuService.TogglePopularAsync(id);
+
+            TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
             return RedirectToAction("Index");
-        }
-
-        // Helper method
-        private bool IsAdmin()
-        {
-            var token = HttpContext.Session.GetString("JwtToken");
-            return !string.IsNullOrEmpty(token);
         }
     }
 }

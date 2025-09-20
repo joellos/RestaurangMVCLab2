@@ -1,9 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using RestaurangMVCLab2.DTOs;  
-
+using RestaurangMVCLab2.DTOs;
 using RestaurangMVCLab2.Services;
 
-namespace RestaurangMVCLab2.Controllers 
+namespace RestaurangMVCLab2.Controllers
 {
     public class TableController : Controller
     {
@@ -14,14 +13,11 @@ namespace RestaurangMVCLab2.Controllers
             _tableService = tableService;
         }
 
-        // Kontrollera admin-status och sätt JWT token
+        // Helper method för admin-autentisering (samma pattern som BookingController)
         private bool IsAdminAuthenticated()
         {
             var token = HttpContext.Session.GetString("JwtToken");
-            if (string.IsNullOrEmpty(token))
-            {
-                return false;
-            }
+            if (string.IsNullOrEmpty(token)) return false;
 
             _tableService.SetAuthToken(token);
             return true;
@@ -36,21 +32,17 @@ namespace RestaurangMVCLab2.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            try
+            var result = await _tableService.GetAllTablesAsync();
+
+            if (result.Succeeded)
             {
-                var tables = await _tableService.GetAllTablesAsync();
-
-                // Lägg till success message från andra actions
-                if (TempData.ContainsKey("SuccessMessage"))
-                {
-                    ViewBag.SuccessMessage = TempData["SuccessMessage"];
-                }
-
+                var tables = result.GetData<List<TableResponseDto>>() ?? new List<TableResponseDto>();
+                ViewBag.SuccessMessage = result.Message;
                 return View(tables);
             }
-            catch (Exception)
+            else
             {
-                TempData["ErrorMessage"] = "Kunde inte hämta bordslista.";
+                TempData["ErrorMessage"] = result.Message;
                 return RedirectToAction("Index", "Home");
             }
         }
@@ -85,7 +77,7 @@ namespace RestaurangMVCLab2.Controllers
 
             var result = await _tableService.CreateTableAsync(model);
 
-            if (result.Success)
+            if (result.Succeeded)
             {
                 TempData["SuccessMessage"] = result.Message;
                 return RedirectToAction(nameof(Index));
@@ -106,7 +98,14 @@ namespace RestaurangMVCLab2.Controllers
                 return RedirectToAction("Login", "Auth");
             }
 
-            var table = await _tableService.GetTableByIdAsync(id);
+            var result = await _tableService.GetTableByIdAsync(id);
+            if (!result.Succeeded)
+            {
+                TempData["ErrorMessage"] = result.Message;
+                return RedirectToAction(nameof(Index));
+            }
+
+            var table = result.GetData<TableResponseDto>();
             if (table == null)
             {
                 TempData["ErrorMessage"] = "Bordet hittades inte.";
@@ -140,12 +139,20 @@ namespace RestaurangMVCLab2.Controllers
             if (!ModelState.IsValid)
             {
                 ViewBag.TableId = id;
+
+                // Hämta nuvarande table-info igen för visning vid fel
+                var currentTableResult = await _tableService.GetTableByIdAsync(id);
+                if (currentTableResult.Succeeded)
+                {
+                    ViewBag.CurrentTable = currentTableResult.GetData<TableResponseDto>();
+                }
+
                 return View(model);
             }
 
             var result = await _tableService.UpdateTableAsync(id, model);
 
-            if (result.Success)
+            if (result.Succeeded)
             {
                 TempData["SuccessMessage"] = result.Message;
                 return RedirectToAction(nameof(Index));
@@ -154,6 +161,14 @@ namespace RestaurangMVCLab2.Controllers
             {
                 TempData["ErrorMessage"] = result.Message;
                 ViewBag.TableId = id;
+
+                // Hämta nuvarande table-info igen för visning vid fel
+                var currentTableResult = await _tableService.GetTableByIdAsync(id);
+                if (currentTableResult.Succeeded)
+                {
+                    ViewBag.CurrentTable = currentTableResult.GetData<TableResponseDto>();
+                }
+
                 return View(model);
             }
         }
@@ -171,15 +186,7 @@ namespace RestaurangMVCLab2.Controllers
 
             var result = await _tableService.DeleteTableAsync(id);
 
-            if (result.Success)
-            {
-                TempData["SuccessMessage"] = result.Message;
-            }
-            else
-            {
-                TempData["ErrorMessage"] = result.Message;
-            }
-
+            TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
             return RedirectToAction(nameof(Index));
         }
 
@@ -196,15 +203,7 @@ namespace RestaurangMVCLab2.Controllers
 
             var result = await _tableService.ToggleActiveAsync(id);
 
-            if (result.Success)
-            {
-                TempData["SuccessMessage"] = result.Message;
-            }
-            else
-            {
-                TempData["ErrorMessage"] = result.Message;
-            }
-
+            TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] = result.Message;
             return RedirectToAction(nameof(Index));
         }
     }

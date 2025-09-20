@@ -1,63 +1,96 @@
-
 using RestaurangMVCLab2.Services;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Lägg till MVC services
+// Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Registrera HttpClient och MenuService
-// Program.cs
+// Session configuration för JWT tokens
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2); // Session timeout efter 2 timmar
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.Name = "RestaurangMVC.Session";
+});
+
+// HTTP Client configuration för API-kommunikation
+builder.Services.AddHttpClient<AuthService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7135/api/"); // Din API bas-URL
+    client.DefaultRequestHeaders.Add("User-Agent", "RestaurangMVC/1.0");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
 builder.Services.AddHttpClient<MenuService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7135/api/");
-});
-
-builder.Services.AddHttpClient<AuthService>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7135/api/");
-});
-
-builder.Services.AddHttpClient<BookingService>(client =>
-{
-    client.BaseAddress = new Uri("https://localhost:7135/api/");
+    client.DefaultRequestHeaders.Add("User-Agent", "RestaurangMVC/1.0");
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
 
 builder.Services.AddHttpClient<TableService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7135/api/");
+    client.DefaultRequestHeaders.Add("User-Agent", "RestaurangMVC/1.0");
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
 
-
-// Lägg till session support (för att hålla JWT token)
-builder.Services.AddSession(options =>
+builder.Services.AddHttpClient<BookingService>(client =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
+    client.BaseAddress = new Uri("https://localhost:7135/api/");
+    client.DefaultRequestHeaders.Add("User-Agent", "RestaurangMVC/1.0");
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
+
+// Logging configuration
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+// Set log levels
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
 app.UseRouting();
 
-// Lägg till session middleware
+// IMPORTANT: Session must be before Authorization
 app.UseSession();
 
 app.UseAuthorization();
 
+app.MapStaticAssets();
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}")
+    .WithStaticAssets();
+
+// Additional routes för admin-funktionalitet
+app.MapControllerRoute(
+    name: "admin",
+    pattern: "admin/{action=Index}",
+    defaults: new { controller = "Admin" });
+
+app.MapControllerRoute(
+    name: "auth",
+    pattern: "auth/{action=Login}",
+    defaults: new { controller = "Auth" });
+
+// Logging för startup
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("?? RestaurangMVC Application starting...");
+logger.LogInformation("?? API Base URL configured: https://localhost:7135/api/");
+logger.LogInformation("?? Environment: {Environment}", app.Environment.EnvironmentName);
 
 app.Run();
