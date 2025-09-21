@@ -1,52 +1,63 @@
 ﻿@using RestaurangMVCLab2.DTOs
 @model List<MenuItemResponseDto>
 @{
+    /* ⭐ SEO META-DATA FÖR STARTSIDAN */
     ViewData["Title"] = "Lite av Allt - Familjerestaurang";
+    ViewData["Description"] = "Familjerestaurang i Stockholm med klassisk husmanskost och italienska favoriter. Välkommen till en autentisk matupplevelse för hela familjen.";
+    ViewData["Keywords"] = "restaurang stockholm, familjerestaurang, husmanskost, italiensk mat, svenska rätter, pizza, pasta";
+    /* ⭐ SLUT PÅ SEO-TILLÄGG */
 }
 
 <div class="text-center">
+    <!-- ⭐ H1 ÄR BRA SOM DEN ÄR - HUVUDRUBRIK FÖR SIDAN -->
     <h1 class="display-4">Välkommen till Lite av Allt</h1>
     <p class="lead">Familjerestaurang med klassisk husmanskost och italienska favoriter. Här hittar alla i familjen något att njuta av!</p>
 </div>
- @if (Model.Any())
-    {
-        <div class="row">
-            @foreach (var item in Model)
-            {
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
-                        @* Bild (om den finns) *@
-                        @if (!string.IsNullOrEmpty(item.ImageUrl))
-                        {
-                            <img src="@item.ImageUrl" class="card-img-top" alt="@item.Name" style="height: 200px; object-fit: cover;">
-                        }
-                        else
-                        {
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                                <i class="fas fa-utensils fa-3x text-muted"></i>
-                            </div>
-                        }
 
-                        <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title">@item.Name</h5>
-                                @if (item.IsPopular)
-                                {
-                                    <span class="badge bg-danger">Populär</span>
-                                }
-                            </div>
+@if (Model.Any())
+{
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    @* ⭐ BILDOPTIMERING - FÖRBÄTTRAD ALT-TEXT OCH LAZY LOADING *@
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="@item.ImageUrl"
+                             class="card-img-top"
+                             alt="@item.Name - @item.Description"
+                             style="height: 200px; object-fit: cover;"
+                             loading="lazy">
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-utensils fa-3x text-muted"></i>
+                        </div>
+                    }
 
-                            <p class="card-text flex-grow-1">@item.Description</p>
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <!-- ⭐ H2 ISTÄLLET FÖR H5 FÖR BÄTTRE SEO-HIERARKI -->
+                            <h2 class="card-title h5">@item.Name</h2>
+                            @if (item.IsPopular)
+                            {
+                                <span class="badge bg-danger">Populär</span>
+                            }
+                        </div>
 
-                            <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="h5 text-primary mb-0">@item.Price.ToString("C")</span>
-                                    <span class="badge bg-secondary">@item.Category</span>
-                                </div>
+                        <p class="card-text flex-grow-1">@item.Description</p>
+
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 text-primary mb-0">@item.Price.ToString("C")</span>
+                                <span class="badge bg-secondary">@item.Category</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            }
-        </div>
-    }
+            </div>
+        }
+    </div>
+}

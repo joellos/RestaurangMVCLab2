@@ -3,7 +3,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - RestaurangMVCLab2</title>
+
+    <!-- ⭐ SEO META-TAGGAR - DETTA ÄR DET ENDA SOM ÄR NYTT -->
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " - Lite av Allt" : "Lite av Allt - Familjerestaurang Stockholm")</title>
+    <meta name="description" content="@(ViewData["Description"] ?? "Familjerestaurang i Stockholm som serverar klassisk husmanskost och italienska favoriter. Boka bord idag!")" />
+    <meta name="keywords" content="@(ViewData["Keywords"] ?? "restaurang stockholm, familjerestaurang, husmanskost, italiensk mat, boka bord")" />
+    <meta name="language" content="Swedish" />
+    <meta name="robots" content="index, follow" />
+    <!-- ⭐ SLUT PÅ SEO-TILLÄGG -->
+
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />

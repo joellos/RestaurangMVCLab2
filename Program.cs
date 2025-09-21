@@ -69,6 +69,16 @@ app.UseSession();
 
 app.UseAuthorization();
 
+app.MapControllerRoute(
+    name: "menu-category",
+    pattern: "meny/{category}",
+    defaults: new { controller = "Menu", action = "Index" });
+
+app.MapControllerRoute(
+    name: "menu-search",
+    pattern: "meny/sok/{search}",
+    defaults: new { controller = "Menu", action = "Index" });
+
 app.MapStaticAssets();
 
 app.MapControllerRoute(
