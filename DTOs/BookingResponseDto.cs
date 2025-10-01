@@ -1,5 +1,4 @@
-﻿// DTOs/BookingResponseDto.cs (kopiera exakt från API)
-namespace RestaurangMVCLab2.DTOs
+﻿namespace RestaurangMVCLab2.DTOs
 {
     public class BookingResponseDto
     {
@@ -8,8 +7,9 @@ namespace RestaurangMVCLab2.DTOs
         public int NumberOfGuests { get; set; }
         public string? SpecialRequests { get; set; }
         public DateTime CreatedAt { get; set; }
-        public CustomerSummaryDto Customer { get; set; } = null!;
-        public TableSummaryDto Table { get; set; } = null!;
+        public CustomerSummaryDto Customer { get; set; } = new CustomerSummaryDto();
+        public TableSummaryDto Table { get; set; } = new TableSummaryDto();
+
         public DateTime EndTime => BookingDateTime.AddHours(2);
     }
 

@@ -3,6 +3,13 @@
 @{
     ViewData["Title"] = "Bokningshantering - Admin";
     var selectedDate = ViewBag.SelectedDate as DateTime?;
+
+    // Gruppera bokningar per datum
+    var bookingsByDate = Model
+        .OrderBy(b => b.BookingDateTime)
+        .GroupBy(b => b.BookingDateTime.Date)
+        .OrderBy(g => g.Key)
+        .ToList();
 }
 
 <div class="container mt-4">
@@ -19,49 +26,63 @@
                 </div>
             </div>
 
-            <!-- Date Filter -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <form asp-action="Index" method="get" class="d-flex">
-                        <input type="date" name="date" value="@(selectedDate?.ToString("yyyy-MM-dd"))"
-                               class="form-control me-2" />
-                        <button type="submit" class="btn btn-primary me-2">
-                            <i class="fas fa-filter"></i> Filtrera
-                        </button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">
-                            <i class="fas fa-times"></i> Rensa
-                        </a>
-                    </form>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    @if (selectedDate.HasValue)
-                    {
-                        <span class="badge bg-info fs-6">
-                            <i class="fas fa-calendar me-1"></i>
-                            Visar bokningar för @selectedDate.Value.ToString("yyyy-MM-dd")
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-secondary fs-6">
-                            <i class="fas fa-list me-1"></i>
-                            Visar alla bokningar
-                        </span>
-                    }
+            <!-- Filter och Search -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <!-- Date Filter -->
+                        <div class="col-md-6">
+                            <form asp-action="Index" method="get" class="d-flex">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-calendar"></i>
+                                    </span>
+                                    <input type="date"
+                                           name="date"
+                                           value="@(selectedDate?.ToString("yyyy-MM-dd"))"
+                                           class="form-control" />
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-filter"></i> Filtrera
+                                    </button>
+                                    <a asp-action="Index" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times"></i> Rensa
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Quick Date Filters -->
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 justify-content-md-end flex-wrap">
+                                <a asp-action="Index" asp-route-date="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-calendar-day"></i> Idag
+                                </a>
+                                <a asp-action="Index" asp-route-date="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-calendar-plus"></i> Imorgon
+                                </a>
+                                <a asp-action="Index" asp-route-date="@DateTime.Today.AddDays(7).ToString("yyyy-MM-dd")"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-calendar-week"></i> Om 1 vecka
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Statistics Cards -->
             <div class="row mb-4">
                 <div class="col-md-3">
-                    <div class="card bg-primary text-white">
+                    <div class="card bg-primary text-white h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-calendar-check fa-2x me-3"></i>
                                 <div>
-                                    <h5 class="card-title mb-0">@Model.Count</h5>
+                                    <h3 class="card-title mb-0">@Model.Count</h3>
                                     <p class="card-text small mb-0">
-                                        @(selectedDate.HasValue ? "Bokningar idag" : "Totalt bokningar")
+                                        @(selectedDate.HasValue ? "Bokningar detta datum" : "Totalt bokningar")
                                     </p>
                                 </div>
                             </div>
@@ -69,12 +90,12 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-success text-white">
+                    <div class="card bg-success text-white h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-users fa-2x me-3"></i>
                                 <div>
-                                    <h5 class="card-title mb-0">@Model.Sum(b => b.NumberOfGuests)</h5>
+                                    <h3 class="card-title mb-0">@Model.Sum(b => b.NumberOfGuests)</h3>
                                     <p class="card-text small mb-0">Totalt gäster</p>
                                 </div>
                             </div>
@@ -82,12 +103,12 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-info text-white">
+                    <div class="card bg-info text-white h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-clock fa-2x me-3"></i>
                                 <div>
-                                    <h5 class="card-title mb-0">@Model.Count(b => b.BookingDateTime > DateTime.Now)</h5>
+                                    <h3 class="card-title mb-0">@Model.Count(b => b.BookingDateTime > DateTime.Now)</h3>
                                     <p class="card-text small mb-0">Kommande</p>
                                 </div>
                             </div>
@@ -95,12 +116,12 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card bg-warning text-white">
+                    <div class="card bg-warning text-white h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-chair fa-2x me-3"></i>
                                 <div>
-                                    <h5 class="card-title mb-0">@Model.Select(b => b.Table.TableNumber).Distinct().Count()</h5>
+                                    <h3 class="card-title mb-0">@Model.Select(b => b.Table.TableNumber).Distinct().Count()</h3>
                                     <p class="card-text small mb-0">Unika bord</p>
                                 </div>
                             </div>
@@ -109,121 +130,168 @@
                 </div>
             </div>
 
-            <!-- Bookings List -->
+            <!-- Bookings List - Grupperad per datum -->
             @if (Model.Any())
             {
-                <div class="card shadow">
-                    <div class="card-header bg-light">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-list me-2"></i>
-                            Bokningar (@Model.Count st)
-                        </h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th><i class="fas fa-calendar me-1"></i>Datum & Tid</th>
-                                        <th><i class="fas fa-user me-1"></i>Kund</th>
-                                        <th><i class="fas fa-phone me-1"></i>Telefon</th>
-                                        <th><i class="fas fa-chair me-1"></i>Bord</th>
-                                        <th><i class="fas fa-users me-1"></i>Gäster</th>
-                                        <th><i class="fas fa-comment me-1"></i>Önskemål</th>
-                                        <th class="text-end"><i class="fas fa-cogs me-1"></i>Åtgärder</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var booking in Model.OrderBy(b => b.BookingDateTime))
+                @foreach (var dateGroup in bookingsByDate)
+                {
+                    var dateGroupKey = dateGroup.Key;
+                    var bookingsForDate = dateGroup.ToList();
+                    var isToday = dateGroupKey == DateTime.Today;
+                    var isPast = dateGroupKey < DateTime.Today;
+
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header @(isToday ? "bg-warning" : isPast ? "bg-secondary" : "bg-primary") text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-calendar-day me-2"></i>
+                                    @dateGroupKey.ToString("dddd, d MMMM yyyy", new System.Globalization.CultureInfo("sv-SE"))
+                                    @if (isToday)
                                     {
-                                        var isPast = booking.BookingDateTime < DateTime.Now;
-                                        var isToday = booking.BookingDateTime.Date == DateTime.Today;
-                                        var rowClass = isPast ? "table-secondary" : (isToday ? "table-warning" : "");
-
-                                        <tr class="@rowClass">
-                                            <td>
-                                                <strong class="text-primary">@booking.BookingDateTime.ToString("yyyy-MM-dd")</strong>
-                                                <br>
-                                                <small class="text-muted">
-                                                    @booking.BookingDateTime.ToString("HH:mm") - @booking.EndTime.ToString("HH:mm")
-                                                    @if (isPast)
-                                                    {
-                                                        <span class="badge bg-secondary ms-1">Avslutad</span>
-                                                    }
-                                                    else if (isToday)
-                                                    {
-                                                        <span class="badge bg-warning text-dark ms-1">Idag</span>
-                                                    }
-                                                </small>
-                                            </td>
-                                            <td>
-                                                <strong>@booking.Customer.Name</strong>
-                                            </td>
-                                            <td>
-                                                <span class="text-muted">@booking.Customer.PhoneNumber</span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-info">
-                                                    Bord @booking.Table.TableNumber
-                                                </span>
-                                                <br>
-                                                <small class="text-muted">(@booking.Table.Capacity platser)</small>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-success">
-                                                    @booking.NumberOfGuests
-                                                    @(booking.NumberOfGuests == 1 ? "gäst" : "gäster")
-                                                </span>
-                                            </td>
-                                            <td>
-                                                @if (!string.IsNullOrEmpty(booking.SpecialRequests))
-                                                {
-                                                    <span class="text-truncate d-inline-block" style="max-width: 150px;"
-                                                          title="@booking.SpecialRequests">
-                                                        @booking.SpecialRequests
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="text-muted">Inga önskemål</span>
-                                                }
-                                            </td>
-                                            <td class="text-end">
-                                                <div class="btn-group" role="group">
-                                                    <!-- Details -->
-                                                    <a href="@Url.Action("Details", new { id = booking.Id })"
-                                                       class="btn btn-outline-info btn-sm"
-                                                       title="Visa detaljer">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-
-                                                    <!-- Edit -->
-                                                    <a href="@Url.Action("Edit", new { id = booking.Id })"
-                                                       class="btn btn-outline-primary btn-sm"
-                                                       title="Redigera bokning">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-
-                                                    <!-- Delete -->
-                                                    <form asp-action="Delete" asp-route-id="@booking.Id"
-                                                          method="post" class="d-inline"
-                                                          onsubmit="return confirm('Är du säker på att du vill ta bort denna bokning för @booking.Customer.Name?')">
-                                                        @Html.AntiForgeryToken()
-                                                        <button type="submit"
-                                                                class="btn btn-outline-danger btn-sm"
-                                                                title="Ta bort bokning">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                        <span class="badge bg-light text-dark ms-2">Idag</span>
                                     }
-                                </tbody>
-                            </table>
+                                    @if (isPast)
+                                    {
+                                        <span class="badge bg-light text-dark ms-2">Tidigare</span>
+                                    }
+                                </h5>
+                                <span class="badge bg-light text-dark">
+                                    @bookingsForDate.Count bokningar | @bookingsForDate.Sum(b => b.NumberOfGuests) gäster
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 100px;">
+                                                <i class="fas fa-clock me-1"></i>Tid
+                                            </th>
+                                            <th>
+                                                <i class="fas fa-user me-1"></i>Kund
+                                            </th>
+                                            <th>
+                                                <i class="fas fa-phone me-1"></i>Kontakt
+                                            </th>
+                                            <th style="width: 100px;">
+                                                <i class="fas fa-chair me-1"></i>Bord
+                                            </th>
+                                            <th style="width: 100px;">
+                                                <i class="fas fa-users me-1"></i>Gäster
+                                            </th>
+                                            <th>
+                                                <i class="fas fa-comment me-1"></i>Önskemål
+                                            </th>
+                                            <th class="text-end" style="width: 150px;">
+                                                <i class="fas fa-cogs me-1"></i>Åtgärder
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var booking in bookingsForDate.OrderBy(b => b.BookingDateTime))
+                                        {
+                                            var bookingPast = booking.BookingDateTime < DateTime.Now;
+                                            var bookingToday = booking.BookingDateTime.Date == DateTime.Today;
+                                            var rowClass = bookingPast ? "table-secondary" : (bookingToday ? "table-warning" : "");
+
+                                            <tr class="@rowClass">
+                                                <td>
+                                                    <strong class="text-primary">@booking.BookingDateTime.ToString("HH:mm")</strong>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        - @booking.EndTime.ToString("HH:mm")
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <strong>@(booking.Customer?.Name ?? "Namn saknas")</strong>
+                                                        <br>
+                                                        <small class="text-muted">ID: @booking.Customer?.Id</small>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="small">
+                                                        <i class="fas fa-phone text-muted me-1"></i>
+                                                        @if (!string.IsNullOrEmpty(booking.Customer?.PhoneNumber))
+                                                        {
+                                                            <a href="tel:@booking.Customer.PhoneNumber" class="text-decoration-none">
+                                                                @booking.Customer.PhoneNumber
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">Telefon saknas</span>
+                                                        }
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info fs-6">
+                                                        Bord @booking.Table.TableNumber
+                                                    </span>
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        (@booking.Table.Capacity platser)
+                                                    </small>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-success fs-6">
+                                                        <i class="fas fa-users me-1"></i>
+                                                        @booking.NumberOfGuests
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    @if (!string.IsNullOrEmpty(booking.SpecialRequests))
+                                                    {
+                                                        <div class="text-truncate" style="max-width: 200px;" title="@booking.SpecialRequests">
+                                                            <i class="fas fa-comment-dots text-warning me-1"></i>
+                                                            @booking.SpecialRequests
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted small">
+                                                            <i class="fas fa-minus"></i> Inga önskemål
+                                                        </span>
+                                                    }
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="btn-group" role="group">
+                                                        <!-- Details -->
+                                                        <a href="@Url.Action("Details", new { id = booking.Id })"
+                                                           class="btn btn-outline-info btn-sm"
+                                                           title="Visa detaljer">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+
+                                                        <!-- Edit -->
+                                                        <a href="@Url.Action("Edit", new { id = booking.Id })"
+                                                           class="btn btn-outline-primary btn-sm"
+                                                           title="Redigera bokning">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+
+                                                        <!-- Delete -->
+                                                        <form asp-action="Delete" asp-route-id="@booking.Id"
+                                                              method="post" class="d-inline"
+                                                              onsubmit="return confirm('Är du säker på att du vill ta bort bokningen för @booking.Customer.Name kl @booking.BookingDateTime.ToString("HH:mm")?')">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit"
+                                                                    class="btn btn-outline-danger btn-sm"
+                                                                    title="Ta bort bokning">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
             }
             else
             {
@@ -257,3 +325,41 @@
         </div>
     </div>
 </div>
+
+<style>
+    /* Förbättra tabellvisning */
+    .table th {
+        font-weight: 600;
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* Responsiva kort */
+    @@media (max-width: 768px) {
+        .btn-group
+
+    {
+        flex-direction: column;
+    }
+
+    .btn-group .btn {
+        border-radius: 0.25rem !important;
+        margin-bottom: 2px;
+    }
+
+    }
+
+    /* Hover-effekter */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    /* Badge-styling */
+    .badge {
+        font-weight: 500;
+    }
+</style>

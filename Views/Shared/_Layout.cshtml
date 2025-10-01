@@ -4,13 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- ⭐ SEO META-TAGGAR - DETTA ÄR DET ENDA SOM ÄR NYTT -->
+    <!-- ⭐ SEO META-TAGGAR -->
     <title>@(ViewData["Title"] != null ? ViewData["Title"] + " - Lite av Allt" : "Lite av Allt - Familjerestaurang Stockholm")</title>
     <meta name="description" content="@(ViewData["Description"] ?? "Familjerestaurang i Stockholm som serverar klassisk husmanskost och italienska favoriter. Boka bord idag!")" />
     <meta name="keywords" content="@(ViewData["Keywords"] ?? "restaurang stockholm, familjerestaurang, husmanskost, italiensk mat, boka bord")" />
     <meta name="language" content="Swedish" />
     <meta name="robots" content="index, follow" />
-    <!-- ⭐ SLUT PÅ SEO-TILLÄGG -->
 
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -51,20 +50,21 @@
                                 Meny
                             </a>
                         </li>
-                        <!-- TODO: Lägg till bokningslänk här senare -->
-                        @* <li class="nav-item">
-                            <a class="nav-link px-3" asp-area="" asp-controller="Booking" asp-action="Index">
+                        <!-- ⭐ BOKNINGSLÄNK FÖR KUNDER (öppnar React-app) -->
+                        <li class="nav-item">
+                            <a class="nav-link px-3 text-success fw-semibold" href="/boka-bord" target="_blank">
                                 <i class="fas fa-calendar-plus me-1"></i>
-                                Boka bord
+                                Boka Bord
+                                <i class="fas fa-external-link-alt ms-1" style="font-size: 0.7em;"></i>
                             </a>
-                        </li> *@
+                        </li>
                     </ul>
 
                     <!-- Höger navigation -->
                     <ul class="navbar-nav ms-auto">
                         @if (!string.IsNullOrEmpty(Context.Session.GetString("JwtToken")))
                         {
-                            <!-- INLOGGAD - Expanderad Admin dropdown med fler funktioner -->
+                            <!-- INLOGGAD - Expanderad Admin dropdown -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle fw-bold px-3" href="#" role="button"
                                    data-bs-toggle="dropdown" aria-expanded="false"
@@ -116,9 +116,9 @@
                                         </small>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item py-2" asp-controller="Booking" asp-action="Index">
+                                        <a class="dropdown-item py-2" asp-area="" asp-controller="Booking" asp-action="Index">
                                             <i class="fas fa-list text-warning me-3"></i>
-                                            <span>Visa alla bokningar</span>
+                                            <span>Hantera bokningar</span>
                                         </a>
                                     </li>
 
@@ -255,7 +255,6 @@
     <!-- Auto-dismiss alerts after 5 seconds -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-dismiss success messages after 5 seconds
             const successAlerts = document.querySelectorAll('.alert-success');
             successAlerts.forEach(function(alert) {
                 setTimeout(function() {
@@ -264,7 +263,6 @@
                 }, 5000);
             });
 
-            // Auto-dismiss info messages after 7 seconds
             const infoAlerts = document.querySelectorAll('.alert-info');
             infoAlerts.forEach(function(alert) {
                 setTimeout(function() {
